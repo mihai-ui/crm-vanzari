@@ -163,168 +163,151 @@ tbody tr:hover td{background:var(--surface2)}
 <div id="modal-root"></div>
 <div class="toast" id="toast"></div>
 <script>
-var URL = 'https://bjszsfhwwzvfbzzcrgad.supabase.co/rest/v1/';
-var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqc3pzZmh3d3p2ZmJ6emNyZ2FkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4ODg4NzIsImV4cCI6MjA5NDQ2NDg3Mn0.V50ycUWmgU66pheEqbhJHxLDkBdWdl8NHcgIJ-9jtIc';
+var SB='https://ujktwiwhghpwjaasfmaw.supabase.co/rest/v1/';
+var KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqa3R3aXdoZ2hwd2phYXNmbWF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4OTUyOTgsImV4cCI6MjA5NDQ3MTI5OH0.MYNgVnt_tFYzsgzZrq-E59IUBVp7rCP3Tc741yVzLKQ';
+var STAGES=['Programare','Validare','Intalnire','Ofertare','Followup','Vanzare','Onboarding','Contract'];
+var SL={Programare:'Programare',Validare:'Validare',Intalnire:'Intalnire Zoom',Ofertare:'Ofertare',Followup:'Follow-up',Vanzare:'Vanzare',Onboarding:'Onboarding',Contract:'Contract'};
+var db={clienti:[],deals:[],oferte:[],sarcini:[]};
 
-function req(method, table, body, filter, cb) {
-  var xhr = new XMLHttpRequest();
-  var url = URL + table + (filter ? '?' + filter : '');
-  xhr.open(method, url, true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.setRequestHeader('apikey', KEY);
-  xhr.setRequestHeader('Authorization', 'Bearer ' + KEY);
-  xhr.setRequestHeader('Prefer', 'return=representation');
-  xhr.onload = function() {
-    if (xhr.status >= 200 && xhr.status < 300) {
-      try { cb(null, JSON.parse(xhr.responseText)); }
-      catch(e) { cb(null, []); }
-    } else {
-      cb(new Error('Status ' + xhr.status + ': ' + xhr.responseText));
-    }
+function req(method,table,body,filter,cb){
+  var xhr=new XMLHttpRequest();
+  xhr.open(method,SB+table+(filter?'?'+filter:''),true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.setRequestHeader('apikey',KEY);
+  xhr.setRequestHeader('Authorization','Bearer '+KEY);
+  xhr.setRequestHeader('Prefer','return=representation');
+  xhr.onload=function(){
+    if(xhr.status>=200&&xhr.status<300){
+      try{cb(null,xhr.responseText?JSON.parse(xhr.responseText):[]);}
+      catch(e){cb(null,[]);}
+    }else{cb(new Error(xhr.status+': '+xhr.responseText));}
   };
-  xhr.onerror = function() { cb(new Error('Eroare retea')); };
-  xhr.send(body ? JSON.stringify(body) : null);
+  xhr.onerror=function(){cb(new Error('Eroare retea'));};
+  xhr.send(body?JSON.stringify(body):null);
 }
 
-function get(table, cb) { req('GET', table, null, 'order=created_at.desc', cb); }
-function post(table, body, cb) { req('POST', table, body, null, cb); }
-function patch(table, id, body) { req('PATCH', table, body, 'id=eq.' + id, function(){}); }
+function get(t,cb){req('GET',t,null,'order=created_at.desc',cb);}
+function post(t,b,cb){req('POST',t,b,null,cb);}
+function patch(t,id,b){req('PATCH',t,b,'id=eq.'+id,function(){});}
 
-var STAGES = ['Programare','Validare','Intalnire','Ofertare','Followup','Vanzare','Onboarding','Contract'];
-var SL = {Programare:'Programare',Validare:'Validare',Intalnire:'Intalnire Zoom',Ofertare:'Ofertare',Followup:'Follow-up',Vanzare:'Vanzare',Onboarding:'Onboarding',Contract:'Contract'};
-var db = {clienti:[],deals:[],oferte:[],sarcini:[]};
-
-function load() {
-  get('clienti', function(e,d){ if(!e){db.clienti=d;renderClienti();renderDashboard();} else toast('Eroare clienti: '+e.message); });
-  get('deals', function(e,d){ if(!e){db.deals=d;renderPipeline();renderDashboard();renderStatistici();} });
-  get('oferte', function(e,d){ if(!e){db.oferte=d;renderOferte();renderStatistici();} });
-  get('sarcini', function(e,d){ if(!e){db.sarcini=d;renderSarcini();renderDashboard();} });
-  document.getElementById('conn-status').textContent = 'Conectat';
-  document.getElementById('conn-status').style.color = '#1a7a4a';
+function load(){
+  get('clienti',function(e,d){if(!e){db.clienti=d;renderClienti();renderDashboard();}else{toast('Eroare: '+e.message);}});
+  get('deals',function(e,d){if(!e){db.deals=d;renderPipeline();renderDashboard();renderStatistici();}});
+  get('oferte',function(e,d){if(!e){db.oferte=d;renderOferte();renderStatistici();}});
+  get('sarcini',function(e,d){if(!e){db.sarcini=d;renderSarcini();renderDashboard();}});
+  document.getElementById('conn-status').textContent='Conectat';
+  document.getElementById('conn-status').style.color='#1a7a4a';
 }
 
-function renderDashboard() {
-  var open = db.deals.filter(function(d){return d.etapa!=='Contract';});
-  var val = open.reduce(function(s,d){return s+(d.valoare||0);},0);
-  var openT = db.sarcini.filter(function(t){return !t.done;});
-  document.getElementById('m-clienti').textContent = db.clienti.length;
-  document.getElementById('m-deals').textContent = open.length;
-  document.getElementById('m-val').textContent = val.toLocaleString('ro-RO');
-  document.getElementById('m-sarcini').textContent = openT.length;
-  var dd = document.getElementById('dash-deals');
-  dd.innerHTML = db.deals.length ? db.deals.slice(0,5).map(function(d){
-    return '<div class="task-item"><div style="flex:1"><div style="font-size:13px;font-weight:600">'+d.nume+'</div><div style="font-size:11px;color:var(--text3)">'+(d.client||'')+'</div></div><span class="badge b-'+d.etapa+'">'+(SL[d.etapa]||d.etapa)+'</span></div>';
-  }).join('') : '<div class="empty">Nicio oportunitate.</div>';
-  var dt = document.getElementById('dash-tasks');
-  dt.innerHTML = openT.length ? openT.slice(0,5).map(function(t){
-    return '<div class="task-item"><div style="flex:1"><div style="font-size:13px;font-weight:600">'+t.text+'</div><div style="font-size:11px;color:var(--text3)">'+(t.client||'')+(t.data_scadenta?' - '+t.data_scadenta:'')+'</div></div><span class="badge b-'+t.prioritate+'">'+t.prioritate+'</span></div>';
-  }).join('') : '<div class="empty">Nicio sarcina activa.</div>';
+function renderDashboard(){
+  var open=db.deals.filter(function(d){return d.etapa!=='Contract';});
+  var val=open.reduce(function(s,d){return s+(d.valoare||0);},0);
+  var openT=db.sarcini.filter(function(t){return !t.done;});
+  document.getElementById('m-clienti').textContent=db.clienti.length;
+  document.getElementById('m-deals').textContent=open.length;
+  document.getElementById('m-val').textContent=val.toLocaleString('ro-RO');
+  document.getElementById('m-sarcini').textContent=openT.length;
+  document.getElementById('dash-deals').innerHTML=db.deals.length?db.deals.slice(0,5).map(function(d){return '<div class="task-item"><div style="flex:1"><div style="font-size:13px;font-weight:600">'+d.nume+'</div><div style="font-size:11px;color:var(--text3)">'+(d.client||'')+'</div></div><span class="badge b-'+d.etapa+'">'+(SL[d.etapa]||d.etapa)+'</span></div>';}).join(''):'<div class="empty">Nicio oportunitate.</div>';
+  document.getElementById('dash-tasks').innerHTML=openT.length?openT.slice(0,5).map(function(t){return '<div class="task-item"><div style="flex:1"><div style="font-size:13px;font-weight:600">'+t.text+'</div><div style="font-size:11px;color:var(--text3)">'+(t.client||'')+(t.data_scadenta?' - '+t.data_scadenta:'')+'</div></div><span class="badge b-'+t.prioritate+'">'+t.prioritate+'</span></div>';}).join(''):'<div class="empty">Nicio sarcina activa.</div>';
 }
 
-function renderClienti() {
-  document.getElementById('clienti-body').innerHTML = db.clienti.length ? db.clienti.map(function(c){
-    return '<tr><td><div style="display:flex;align-items:center;gap:9px"><div class="av">'+(c.companie||'?').slice(0,2).toUpperCase()+'</div><span style="font-weight:600">'+(c.companie||'')+'</span></div></td><td>'+(c.contact||'')+'</td><td>'+(c.email||'')+'</td><td>'+(c.telefon||'')+'</td><td><span class="badge b-'+(c.prioritate||'')+'">'+(c.prioritate||'')+'</span></td></tr>';
-  }).join('') : '<tr><td colspan="5"><div class="empty">Niciun client.</div></td></tr>';
+function renderClienti(){
+  document.getElementById('clienti-body').innerHTML=db.clienti.length?db.clienti.map(function(c){return '<tr><td><div style="display:flex;align-items:center;gap:9px"><div class="av">'+(c.companie||'?').slice(0,2).toUpperCase()+'</div><span style="font-weight:600">'+(c.companie||'')+'</span></div></td><td>'+(c.contact||'')+'</td><td>'+(c.email||'')+'</td><td>'+(c.telefon||'')+'</td><td><span class="badge b-'+(c.prioritate||'')+'">'+(c.prioritate||'')+'</span></td></tr>';}).join(''):'<tr><td colspan="5"><div class="empty">Niciun client.</div></td></tr>';
 }
 
-function renderPipeline() {
-  document.getElementById('pipeline-board').innerHTML = STAGES.map(function(s){
-    var items = db.deals.filter(function(d){return d.etapa===s;});
-    return '<div class="stage"><div class="stage-hdr">'+SL[s]+'<span class="stage-cnt">'+items.length+'</span></div>'+(items.length?items.map(function(d){
-      return '<div class="deal-card"><div class="deal-name">'+d.nume+'</div><div class="deal-meta">'+(d.client||'')+'</div><div class="deal-val">'+(d.valoare||0).toLocaleString('ro-RO')+' lei</div></div>';
-    }).join(''):'<div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">-</div>')+'</div>';
+function renderPipeline(){
+  document.getElementById('pipeline-board').innerHTML=STAGES.map(function(s){
+    var items=db.deals.filter(function(d){return d.etapa===s;});
+    return '<div class="stage"><div class="stage-hdr">'+SL[s]+'<span class="stage-cnt">'+items.length+'</span></div>'+(items.length?items.map(function(d){return '<div class="deal-card"><div class="deal-name">'+d.nume+'</div><div class="deal-meta">'+(d.client||'')+'</div><div class="deal-val">'+(d.valoare||0).toLocaleString('ro-RO')+' lei</div></div>';}).join(''):'<div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">-</div>')+'</div>';
   }).join('');
 }
 
-function renderOferte() {
-  document.getElementById('oferte-body').innerHTML = db.oferte.length ? db.oferte.map(function(o){
-    return '<tr><td style="font-weight:600">'+(o.client||'')+'</td><td>'+(o.descriere||'')+'</td><td style="font-weight:700">'+(o.valoare||0).toLocaleString('ro-RO')+' lei</td><td><span class="badge b-'+(o.status||'')+'">'+(o.status==='platita'?'Platita':o.status==='asteptare'?'In asteptare':'Restanta')+'</span></td><td style="color:var(--text3)">'+(o.data||'')+'</td></tr>';
-  }).join('') : '<tr><td colspan="5"><div class="empty">Nicio oferta.</div></td></tr>';
+function renderOferte(){
+  document.getElementById('oferte-body').innerHTML=db.oferte.length?db.oferte.map(function(o){return '<tr><td style="font-weight:600">'+(o.client||'')+'</td><td>'+(o.descriere||'')+'</td><td style="font-weight:700">'+(o.valoare||0).toLocaleString('ro-RO')+' lei</td><td><span class="badge b-'+(o.status||'')+'">'+(o.status==='platita'?'Platita':o.status==='asteptare'?'In asteptare':'Restanta')+'</span></td><td style="color:var(--text3)">'+(o.data||'')+'</td></tr>';}).join(''):'<tr><td colspan="5"><div class="empty">Nicio oferta.</div></td></tr>';
 }
 
-function renderSarcini() {
-  document.getElementById('sarcini-list').innerHTML = db.sarcini.length ? db.sarcini.map(function(t){
-    return '<div class="task-item"><div class="chk '+(t.done?'done':'')+'" onclick="toggleTask(\''+t.id+'\','+(t.done?'false':'true')+')">'+(t.done?'v':'')+'</div><div style="flex:1"><div class="task-txt '+(t.done?'done':'')+'">'+t.text+'</div><div class="task-sub">'+(t.client||'')+(t.data_scadenta?' - '+t.data_scadenta:'')+'</div></div><span class="badge b-'+t.prioritate+'">'+t.prioritate+'</span></div>';
-  }).join('') : '<div class="empty">Nicio sarcina.</div>';
+function renderSarcini(){
+  document.getElementById('sarcini-list').innerHTML=db.sarcini.length?db.sarcini.map(function(t){return '<div class="task-item"><div class="chk '+(t.done?'done':'')+'" onclick="toggleTask(\''+t.id+'\','+(t.done?'false':'true')+')">'+(t.done?'v':'')+'</div><div style="flex:1"><div class="task-txt '+(t.done?'done':'')+'">'+t.text+'</div><div class="task-sub">'+(t.client||'')+(t.data_scadenta?' - '+t.data_scadenta:'')+'</div></div><span class="badge b-'+t.prioritate+'">'+t.prioritate+'</span></div>';}).join(''):'<div class="empty">Nicio sarcina.</div>';
 }
 
-function renderStatistici() {
-  var castigate = db.deals.filter(function(d){return d.etapa==='Contract';});
-  var total = db.deals.length;
-  var valC = castigate.reduce(function(s,d){return s+(d.valoare||0);},0);
-  var rata = total?Math.round(castigate.length/total*100):0;
-  var avg = total?Math.round(db.deals.reduce(function(s,d){return s+(d.valoare||0);},0)/total):0;
-  document.getElementById('s-castig').textContent = castigate.length;
-  document.getElementById('s-valcastig').textContent = valC.toLocaleString('ro-RO')+' lei';
-  document.getElementById('s-rata').textContent = rata+'%';
-  document.getElementById('s-avg').textContent = avg.toLocaleString('ro-RO')+' lei';
-  var colors = ['#2d5be3','#0369a1','#6d28d9','#c2410c','#7e22ce','#065f46','#166534','#1a7a4a'];
-  var maxD = Math.max.apply(null, STAGES.map(function(s){return db.deals.filter(function(d){return d.etapa===s;}).length;}).concat([1]));
-  document.getElementById('chart-pipeline').innerHTML = STAGES.map(function(s,i){
-    var cnt = db.deals.filter(function(d){return d.etapa===s;}).length;
-    return '<div class="bar-row"><span class="bar-lbl">'+SL[s]+'</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(cnt/maxD*100)+'%;background:'+colors[i]+'"></div></div><span class="bar-val">'+cnt+'</span></div>';
-  }).join('');
-  var oS = [['platita','Platite','#1a7a4a'],['asteptare','Asteptare','#b45309'],['restanta','Restante','#b91c1c']];
-  var maxO = Math.max.apply(null, oS.map(function(x){return db.oferte.filter(function(o){return o.status===x[0];}).length;}).concat([1]));
-  document.getElementById('chart-oferte').innerHTML = oS.map(function(x){
-    var cnt = db.oferte.filter(function(o){return o.status===x[0];}).length;
-    return '<div class="bar-row"><span class="bar-lbl">'+x[1]+'</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(cnt/maxO*100)+'%;background:'+x[2]+'"></div></div><span class="bar-val">'+cnt+'</span></div>';
-  }).join('');
+function renderStatistici(){
+  var castigate=db.deals.filter(function(d){return d.etapa==='Contract';});
+  var total=db.deals.length;
+  var valC=castigate.reduce(function(s,d){return s+(d.valoare||0);},0);
+  var rata=total?Math.round(castigate.length/total*100):0;
+  var avg=total?Math.round(db.deals.reduce(function(s,d){return s+(d.valoare||0);},0)/total):0;
+  document.getElementById('s-castig').textContent=castigate.length;
+  document.getElementById('s-valcastig').textContent=valC.toLocaleString('ro-RO')+' lei';
+  document.getElementById('s-rata').textContent=rata+'%';
+  document.getElementById('s-avg').textContent=avg.toLocaleString('ro-RO')+' lei';
+  var colors=['#2d5be3','#0369a1','#6d28d9','#c2410c','#7e22ce','#065f46','#166534','#1a7a4a'];
+  var maxD=Math.max.apply(null,STAGES.map(function(s){return db.deals.filter(function(d){return d.etapa===s;}).length;}).concat([1]));
+  document.getElementById('chart-pipeline').innerHTML=STAGES.map(function(s,i){var cnt=db.deals.filter(function(d){return d.etapa===s;}).length;return '<div class="bar-row"><span class="bar-lbl">'+SL[s]+'</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(cnt/maxD*100)+'%;background:'+colors[i]+'"></div></div><span class="bar-val">'+cnt+'</span></div>';}).join('');
+  var oS=[['platita','Platite','#1a7a4a'],['asteptare','Asteptare','#b45309'],['restanta','Restante','#b91c1c']];
+  var maxO=Math.max.apply(null,oS.map(function(x){return db.oferte.filter(function(o){return o.status===x[0];}).length;}).concat([1]));
+  document.getElementById('chart-oferte').innerHTML=oS.map(function(x){var cnt=db.oferte.filter(function(o){return o.status===x[0];}).length;return '<div class="bar-row"><span class="bar-lbl">'+x[1]+'</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(cnt/maxO*100)+'%;background:'+x[2]+'"></div></div><span class="bar-val">'+cnt+'</span></div>';}).join('');
 }
 
-function toggleTask(id, done) {
-  patch('sarcini', id, {done:done});
-  db.sarcini = db.sarcini.map(function(t){return t.id===id?{id:t.id,text:t.text,client:t.client,data_scadenta:t.data_scadenta,prioritate:t.prioritate,done:done}:t;});
-  renderSarcini(); renderDashboard();
+function toggleTask(id,done){
+  patch('sarcini',id,{done:done});
+  db.sarcini=db.sarcini.map(function(t){return t.id===id?{id:t.id,text:t.text,client:t.client,data_scadenta:t.data_scadenta,prioritate:t.prioritate,done:done}:t;});
+  renderSarcini();renderDashboard();
 }
 
-var PAGE_CFG = {dashboard:{title:'Dashboard',btn:null},clienti:{title:'Clienti',btn:'showModal("client")'},pipeline:{title:'Pipeline vanzari',btn:'showModal("deal")'},oferte:{title:'Oferte si Facturi',btn:'showModal("oferta")'},sarcini:{title:'Sarcini',btn:'showModal("task")'},statistici:{title:'Statistici',btn:null}};
-var BTN_LABELS = {clienti:'+ Client nou',pipeline:'+ Oportunitate noua',oferte:'+ Oferta noua',sarcini:'+ Sarcina noua'};
+var PAGE_CFG={dashboard:{title:'Dashboard',btn:null},clienti:{title:'Clienti',btn:'showModal("client")'},pipeline:{title:'Pipeline vanzari',btn:'showModal("deal")'},oferte:{title:'Oferte si Facturi',btn:'showModal("oferta")'},sarcini:{title:'Sarcini',btn:'showModal("task")'},statistici:{title:'Statistici',btn:null}};
+var BTN_LABELS={clienti:'+ Client nou',pipeline:'+ Oportunitate noua',oferte:'+ Oferta noua',sarcini:'+ Sarcina noua'};
 
-function nav(page, el) {
+function nav(page,el){
   document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('active');});
-  if(el) el.classList.add('active');
+  if(el)el.classList.add('active');
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.getElementById('page-'+page).classList.add('active');
-  document.getElementById('topbar-title').textContent = PAGE_CFG[page].title;
-  var acts = document.getElementById('topbar-actions');
-  acts.innerHTML = PAGE_CFG[page].btn ? '<button class="btn btn-primary" onclick="'+PAGE_CFG[page].btn+'">'+BTN_LABELS[page]+'</button>' : '';
+  document.getElementById('topbar-title').textContent=PAGE_CFG[page].title;
+  document.getElementById('topbar-actions').innerHTML=PAGE_CFG[page].btn?'<button class="btn btn-primary" onclick="'+PAGE_CFG[page].btn+'">'+BTN_LABELS[page]+'</button>':'';
 }
 
-function clientOpts() { return db.clienti.map(function(c){return '<option>'+c.companie+'</option>';}).join('') || '<option>-</option>'; }
+function clientOpts(){return db.clienti.map(function(c){return '<option>'+c.companie+'</option>';}).join('')||'<option>-</option>';}
 
-function showModal(type) {
-  var html = '';
-  if(type==='client') html='<div class="modal-title">Client nou</div><div class="fg"><div class="field"><label>Companie</label><input id="f1" placeholder="Ex: Acme SRL"></div><div class="field"><label>Contact</label><input id="f2" placeholder="Nume prenume"></div></div><div class="fg"><div class="field"><label>Email</label><input id="f3" placeholder="email@firma.ro"></div><div class="field"><label>Telefon</label><input id="f4" placeholder="07xx xxx xxx"></div></div><div class="fg full"><div class="field"><label>Prioritate</label><select id="f5"><option value="inalt">Inalta</option><option value="mediu" selected>Medie</option><option value="scazut">Scazuta</option></select></div></div><div class="modal-actions"><button class="btn" onclick="closeModal()">Anuleaza</button><button class="btn btn-primary" onclick="saveClient()">Salveaza</button></div>';
-  else if(type==='deal') html='<div class="modal-title">Oportunitate noua</div><div class="fg full"><div class="field"><label>Nume oportunitate</label><input id="f1" placeholder="Ex: Proiect Acme"></div></div><div class="fg"><div class="field"><label>Client</label><select id="f2">'+clientOpts()+'</select></div><div class="field"><label>Valoare (lei)</label><input id="f3" type="number" placeholder="10000"></div></div><div class="fg full"><div class="field"><label>Etapa</label><select id="f4">'+STAGES.map(function(s){return '<option value="'+s+'">'+SL[s]+'</option>';}).join('')+'</select></div></div><div class="modal-actions"><button class="btn" onclick="closeModal()">Anuleaza</button><button class="btn btn-primary" onclick="saveDeal()">Salveaza</button></div>';
-  else if(type==='oferta') html='<div class="modal-title">Oferta noua</div><div class="fg full"><div class="field"><label>Client</label><select id="f1">'+clientOpts()+'</select></div></div><div class="fg full"><div class="field"><label>Descriere serviciu</label><input id="f2" placeholder="Ex: Consultanta IT"></div></div><div class="fg"><div class="field"><label>Valoare (lei)</label><input id="f3" type="number" placeholder="5000"></div><div class="field"><label>Status</label><select id="f4"><option value="asteptare">In asteptare</option><option value="platita">Platita</option><option value="restanta">Restanta</option></select></div></div><div class="modal-actions"><button class="btn" onclick="closeModal()">Anuleaza</button><button class="btn btn-primary" onclick="saveOferta()">Salveaza</button></div>';
-  else if(type==='task') html='<div class="modal-title">Sarcina noua</div><div class="fg full"><div class="field"><label>Descriere</label><input id="f1" placeholder="Ex: Apel follow-up..."></div></div><div class="fg"><div class="field"><label>Client</label><select id="f2">'+clientOpts()+'</select></div><div class="field"><label>Data scadenta</label><input id="f3" placeholder="Ex: 20.05.2026"></div></div><div class="fg full"><div class="field"><label>Prioritate</label><select id="f4"><option value="inalt">Inalta</option><option value="mediu" selected>Medie</option><option value="scazut">Scazuta</option></select></div></div><div class="modal-actions"><button class="btn" onclick="closeModal()">Anuleaza</button><button class="btn btn-primary" onclick="saveTask()">Salveaza</button></div>';
-  document.getElementById('modal-root').innerHTML = '<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'+html+'</div></div>';
-}
-
-function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
-function g(id) { var el = document.getElementById(id); return el ? el.value : ''; }
-
-function saveClient() {
-  var row = {companie:g('f1')||'Companie noua',contact:g('f2'),email:g('f3'),telefon:g('f4'),prioritate:g('f5')};
-  post('clienti', row, function(e,data){ if(!e&&data&&data[0]){db.clienti.unshift(data[0]);closeModal();renderClienti();renderDashboard();toast('Client adaugat!');} else toast('Eroare: '+(e?e.message:'date invalide')); });
-}
-function saveDeal() {
-  var row = {nume:g('f1')||'Oportunitate',client:g('f2'),valoare:parseInt(g('f3'))||0,etapa:g('f4')};
-  post('deals', row, function(e,data){ if(!e&&data&&data[0]){db.deals.unshift(data[0]);closeModal();renderPipeline();renderDashboard();renderStatistici();toast('Oportunitate adaugata!');} else toast('Eroare: '+(e?e.message:'date invalide')); });
-}
-function saveOferta() {
-  var now = new Date();
-  var dstr = now.getDate().toString().padStart(2,'0')+'.'+(now.getMonth()+1).toString().padStart(2,'0')+'.'+now.getFullYear();
-  var row = {client:g('f1'),descriere:g('f2'),valoare:parseInt(g('f3'))||0,status:g('f4'),data:dstr};
-  post('oferte', row, function(e,data){ if(!e&&data&&data[0]){db.oferte.unshift(data[0]);closeModal();renderOferte();renderStatistici();toast('Oferta adaugata!');} else toast('Eroare: '+(e?e.message:'date invalide')); });
-}
-function saveTask() {
-  var row = {text:g('f1')||'Sarcina',client:g('f2'),data_scadenta:g('f3'),prioritate:g('f4'),done:false};
-  post('sarcini', row, function(e,data){ if(!e&&data&&data[0]){db.sarcini.unshift(data[0]);closeModal();renderSarcini();renderDashboard();toast('Sarcina adaugata!');} else toast('Eroare: '+(e?e.message:'date invalide')); });
+function showModal(type){
+  var html='';
+  if(type==='client')html='<div class="modal-title">Client nou</div><div class="fg"><div class="field"><label>Companie</label><input id="f1" placeholder="Ex: Acme SRL"></div><div class="field"><label>Contact</label><input id="f2" placeholder="Nume prenume"></div></div><div class="fg"><div class="field"><label>Email</label><input id="f3" placeholder="email@firma.ro"></div><div class="field"><label>Telefon</label><input id="f4" placeholder="07xx xxx xxx"></div></div><div class="fg full"><div class="field"><label>Prioritate</label><select id="f5"><option value="inalt">Inalta</option><option value="mediu" selected>Medie</option><option value="scazut">Scazuta</option></select></div></div><div class="modal-actions"><button class="btn" onclick="closeModal()">Anuleaza</button><button class="btn btn-primary" onclick="saveClient()">Salveaza</button></div>';
+  else if(type==='deal')html='<div class="modal-title">Oportunitate noua</div><div class="fg full"><div class="field"><label>Nume oportunitate</label><input id="f1" placeholder="Ex: Proiect Acme"></div></div><div class="fg"><div class="field"><label>Client</label><select id="f2">'+clientOpts()+'</select></div><div class="field"><label>Valoare (lei)</label><input id="f3" type="number" placeholder="10000"></div></div><div class="fg full"><div class="field"><label>Etapa</label><select id="f4">'+STAGES.map(function(s){return '<option value="'+s+'">'+SL[s]+'</option>';}).join('')+'</select></div></div><div class="modal-actions"><button class="btn" onclick="closeModal()">Anuleaza</button><button class="btn btn-primary" onclick="saveDeal()">Salveaza</button></div>';
+  else if(type==='oferta')html='<div class="modal-title">Oferta noua</div><div class="fg full"><div class="field"><label>Client</label><select id="f1">'+clientOpts()+'</select></div></div><div class="fg full"><div class="field"><label>Descriere serviciu</label><input id="f2" placeholder="Ex: Consultanta IT"></div></div><div class="fg"><div class="field"><label>Valoare (lei)</label><input id="f3" type="number" placeholder="5000"></div><div class="field"><label>Status</label><select id="f4"><option value="asteptare">In asteptare</option><option value="platita">Platita</option><option value="restanta">Restanta</option></select></div></div><div class="modal-actions"><button class="btn" onclick="closeModal()">Anuleaza</button><button class="btn btn-primary" onclick="saveOferta()">Salveaza</button></div>';
+  else if(type==='task')html='<div class="modal-title">Sarcina noua</div><div class="fg full"><div class="field"><label>Descriere</label><input id="f1" placeholder="Ex: Apel follow-up..."></div></div><div class="fg"><div class="field"><label>Client</label><select id="f2">'+clientOpts()+'</select></div><div class="field"><label>Data scadenta</label><input id="f3" placeholder="Ex: 20.05.2026"></div></div><div class="fg full"><div class="field"><label>Prioritate</label><select id="f4"><option value="inalt">Inalta</option><option value="mediu" selected>Medie</option><option value="scazut">Scazuta</option></select></div></div><div class="modal-actions"><button class="btn" onclick="closeModal()">Anuleaza</button><button class="btn btn-primary" onclick="saveTask()">Salveaza</button></div>';
+  document.getElementById('modal-root').innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'+html+'</div></div>';
 }
 
-function toast(msg) { var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800); }
+function closeModal(){document.getElementById('modal-root').innerHTML='';}
+function g(id){var el=document.getElementById(id);return el?el.value:'';}
+
+function saveClient(){
+  post('clienti',{companie:g('f1')||'Companie noua',contact:g('f2'),email:g('f3'),telefon:g('f4'),prioritate:g('f5')},function(e,data){
+    if(!e&&data&&data[0]){db.clienti.unshift(data[0]);closeModal();renderClienti();renderDashboard();toast('Client adaugat!');}
+    else toast('Eroare: '+(e?e.message:'date invalide'));
+  });
+}
+function saveDeal(){
+  post('deals',{nume:g('f1')||'Oportunitate',client:g('f2'),valoare:parseInt(g('f3'))||0,etapa:g('f4')},function(e,data){
+    if(!e&&data&&data[0]){db.deals.unshift(data[0]);closeModal();renderPipeline();renderDashboard();renderStatistici();toast('Oportunitate adaugata!');}
+    else toast('Eroare: '+(e?e.message:'date invalide'));
+  });
+}
+function saveOferta(){
+  var now=new Date();
+  var dstr=now.getDate().toString().padStart(2,'0')+'.'+(now.getMonth()+1).toString().padStart(2,'0')+'.'+now.getFullYear();
+  post('oferte',{client:g('f1'),descriere:g('f2'),valoare:parseInt(g('f3'))||0,status:g('f4'),data:dstr},function(e,data){
+    if(!e&&data&&data[0]){db.oferte.unshift(data[0]);closeModal();renderOferte();renderStatistici();toast('Oferta adaugata!');}
+    else toast('Eroare: '+(e?e.message:'date invalide'));
+  });
+}
+function saveTask(){
+  post('sarcini',{text:g('f1')||'Sarcina',client:g('f2'),data_scadenta:g('f3'),prioritate:g('f4'),done:false},function(e,data){
+    if(!e&&data&&data[0]){db.sarcini.unshift(data[0]);closeModal();renderSarcini();renderDashboard();toast('Sarcina adaugata!');}
+    else toast('Eroare: '+(e?e.message:'date invalide'));
+  });
+}
+
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
 
 load();
 </script>
