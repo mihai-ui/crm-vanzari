@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Vânzări</title>
+<style>
+:root{--bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;--border:#e2e0d8;--text:#1a1917;--text2:#6b6860;--text3:#a09e97;--accent:#2d5be3;--accent-light:#eef2fd;--green:#1a7a4a;--green-light:#e8f5ee;--amber:#b45309;--amber-light:#fef3e2;--red:#b91c1c;--red-light:#fef2f2;--r:10px;--rs:6px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;overflow:hidden;display:flex}
+.sidebar{width:210px;min-width:210px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh}
+.logo{padding:18px 18px 14px;border-bottom:1px solid var(--border);font-size:15px;font-weight:700;letter-spacing:-0.02em}
+.logo span{font-size:11px;font-weight:400;color:var(--text3);display:block;margin-top:2px}
+.nav{padding:10px 8px;flex:1}
+.ns{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;padding:8px 10px 4px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rs);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.12s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.ni:hover{background:var(--surface2);color:var(--text)}
+.ni.active{background:var(--accent-light);color:var(--accent);font-weight:600}
+.sf{padding:14px;border-top:1px solid var(--border)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:54px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 22px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:700;letter-spacing:-0.01em}
+.content{flex:1;overflow-y:auto;padding:22px}
+.page{display:none}.page.active{display:block}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.metric-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px}
+.metric-value{font-size:26px;font-weight:700;letter-spacing:-0.03em}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.card-title{font-size:13px;font-weight:600}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:13px;font-weight:500;color:var(--text);font-family:inherit;transition:all 0.12s}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:#2450cc}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;padding:9px 18px;text-align:left;border-bottom:1px solid var(--border);background:var(--surface2)}
+td{padding:11px 18px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface2)}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.b-inalt,.b-restanta{background:var(--red-light);color:var(--red)}
+.b-mediu,.b-asteptare{background:var(--amber-light);color:var(--amber)}
+.b-scazut,.b-platita,.b-Contract{background:var(--green-light);color:var(--green)}
+.b-Programare{background:#f0f9ff;color:#0369a1}
+.b-Validare{background:#fef3c7;color:#92400e}
+.b-Intalnire{background:#ede9fe;color:#5b21b6}
+.b-Ofertare{background:#fff7ed;color:#c2410c}
+.b-Followup{background:#fdf4ff;color:#7e22ce}
+.b-Vanzare{background:#ecfdf5;color:#065f46}
+.b-Onboarding{background:#f0fdf4;color:#166534}
+.pipeline{display:grid;grid-template-columns:repeat(8,minmax(140px,1fr));gap:8px;overflow-x:auto;padding-bottom:8px}
+.stage{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px;min-width:140px}
+.stage-hdr{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.stage-cnt{background:var(--border);color:var(--text2);border-radius:99px;padding:1px 6px;font-size:10px}
+.deal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px;margin-bottom:6px;cursor:pointer;transition:border 0.12s}
+.deal-card:hover{border-color:var(--accent)}
+.deal-name{font-size:12px;font-weight:600;margin-bottom:3px;line-height:1.3}
+.deal-meta{font-size:11px;color:var(--text3)}
+.deal-val{font-size:12px;font-weight:700;color:var(--accent);margin-top:4px}
+.task-item{display:flex;align-items:flex-start;gap:11px;padding:11px 18px;border-bottom:1px solid var(--border);transition:background 0.1s}
+.task-item:last-child{border-bottom:none}
+.task-item:hover{background:var(--surface2)}
+.chk{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all 0.12s;background:var(--surface);font-size:11px;color:#fff}
+.chk.done{background:var(--green);border-color:var(--green)}
+.task-txt{font-size:13px;font-weight:400}.task-txt.done{text-decoration:line-through;color:var(--text3)}
+.task-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.bar-row{display:flex;align-items:center;gap:12px;padding:7px 0}
+.bar-lbl{font-size:12px;color:var(--text2);width:110px;text-align:right;flex-shrink:0}
+.bar-track{flex:1;height:8px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;transition:width 0.5s}
+.bar-val{font-size:12px;font-weight:600;width:50px}
+.av{width:28px;height:28px;border-radius:50%;background:var(--accent-light);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:22px;width:450px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.15)}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:18px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.fg.full{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em}
+.field input,.field select{font-family:inherit;font-size:13px;padding:8px 11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);color:var(--text);outline:none;transition:border 0.12s;width:100%}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.empty{padding:36px;text-align:center;color:var(--text3);font-size:13px}
+.loading{display:flex;align-items:center;justify-content:center;padding:36px;color:var(--text3);font-size:13px;gap:8px}
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--text);color:#fff;padding:11px 16px;border-radius:var(--rs);font-size:13px;font-weight:500;z-index:2000;opacity:0;transform:translateY(6px);transition:all 0.2s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">SalesCRM <span>vânzări servicii</span></div>
+  <nav class="nav">
+    <div class="ns">Principal</div>
+    <button class="ni active" onclick="nav('dashboard',this)">⊞ Dashboard</button>
+    <div class="ns">Vânzări</div>
+    <button class="ni" onclick="nav('clienti',this)">👥 Clienți</button>
+    <button class="ni" onclick="nav('pipeline',this)">📊 Pipeline</button>
+    <button class="ni" onclick="nav('oferte',this)">📄 Oferte</button>
+    <button class="ni" onclick="nav('sarcini',this)">✓ Sarcini</button>
+    <button class="ni" onclick="nav('statistici',this)">📈 Statistici</button>
+  </nav>
+  <div class="sf" style="font-size:12px;color:var(--text3)" id="conn-status">● Se conectează...</div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div id="topbar-actions"></div>
+  </div>
+  <div class="content">
+
+    <div class="page active" id="page-dashboard">
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Clienți</div><div class="metric-value" id="m-clienti">—</div><div class="metric-sub">în baza de date</div></div>
+        <div class="metric"><div class="metric-label">Pipeline activ</div><div class="metric-value" id="m-deals">—</div><div class="metric-sub">oportunități deschise</div></div>
+        <div class="metric"><div class="metric-label">Valoare pipeline</div><div class="metric-value" id="m-val">—</div><div class="metric-sub">lei estimați</div></div>
+        <div class="metric"><div class="metric-label">Sarcini active</div><div class="metric-value" id="m-sarcini">—</div><div class="metric-sub">de efectuat</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card"><div class="card-header"><span class="card-title">Oportunități recente</span></div><div id="dash-deals"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Sarcini urgente</span></div><div id="dash-tasks"></div></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-clienti">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Toți clienții</span></div>
+        <table><thead><tr><th>Companie</th><th>Contact</th><th>Email</th><th>Telefon</th><th>Prioritate</th></tr></thead>
+        <tbody id="clienti-body"><tr><td colspan="5"><div class="loading"><div class="spinner"></div>Se încarcă...</div></td></tr></tbody></table>
+      </div>
+    </div>
+
+    <div class="page" id="page-pipeline">
+      <div class="pipeline" id="pipeline-board"><div class="loading"><div class="spinner"></div>Se încarcă...</div></div>
+    </div>
+
+    <div class="page" id="page-oferte">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Oferte & Facturi</span></div>
+        <table><thead><tr><th>Client</th><th>Descriere</th><th>Valoare</th><th>Status</th><th>Data</th></tr></thead>
+        <tbody id="oferte-body"><tr><td colspan="5"><div class="loading"><div class="spinner"></div>Se încarcă...</div></td></tr></tbody></table>
+      </div>
+    </div>
+
+    <div class="page" id="page-sarcini">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Sarcini & Follow-up-uri</span></div>
+        <div id="sarcini-list"><div class="loading"><div class="spinner"></div>Se încarcă...</div></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-statistici">
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Câștigate</div><div class="metric-value" id="s-castig">—</div></div>
+        <div class="metric"><div class="metric-label">Valoare câștigată</div><div class="metric-value" id="s-valcastig">—</div></div>
+        <div class="metric"><div class="metric-label">Rată conversie</div><div class="metric-value" id="s-rata">—</div></div>
+        <div class="metric"><div class="metric-label">Valoare medie</div><div class="metric-value" id="s-avg">—</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card"><div class="card-header"><span class="card-title">Pipeline pe etape</span></div><div style="padding:14px 18px" id="chart-pipeline"></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Oferte după status</span></div><div style="padding:14px 18px" id="chart-oferte"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="modal-root"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = 'https://bjszsfhwwzvfbzzcrgad.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqc3pzZmh3d3p2ZmJ6emNyZ2FkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4ODg4NzIsImV4cCI6MjA5NDQ2NDg3Mn0.V50ycUWmgU66pheEqbhJHxLDkBdWdl8NHcgIJ-9jtIc';
+const HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Prefer': 'return=representation'
+};
+
+const STAGES = ['Programare','Validare','Intalnire','Ofertare','Followup','Vanzare','Onboarding','Contract'];
+const SLABELS = {Programare:'Programare',Validare:'Validare',Intalnire:'Întâlnire Zoom',Ofertare:'Ofertare',Followup:'Follow-up',Vanzare:'Vânzare',Onboarding:'Onboarding',Contract:'Contract'};
+
+let db = {clienti:[],deals:[],oferte:[],sarcini:[]};
+
+async function sbGet(table) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?order=created_at.desc`, {headers: HEADERS});
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbPost(table, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {method:'POST', headers: HEADERS, body: JSON.stringify(body)});
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbPatch(table, id, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {method:'PATCH', headers: HEADERS, body: JSON.stringify(body)});
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function load() {
+  try {
+    const [c,d,o,s] = await Promise.all([sbGet('clienti'),sbGet('deals'),sbGet('oferte'),sbGet('sarcini')]);
+    db.clienti=c; db.deals=d; db.oferte=o; db.sarcini=s;
+    document.getElementById('conn-status').textContent = '● Conectat';
+    document.getElementById('conn-status').style.color = '#1a7a4a';
+    render();
+  } catch(e) {
+    document.getElementById('conn-status').textContent = '● Eroare conexiune';
+    document.getElementById('conn-status').style.color = '#b91c1c';
+    toast('Eroare: ' + e.message);
+  }
+}
+
+function render() {
+  renderDashboard(); renderClienti(); renderPipeline();
+  renderOferte(); renderSarcini(); renderStatistici();
+}
+
+function renderDashboard() {
+  const open = db.deals.filter(d=>d.etapa!=='Contract');
+  const val = open.reduce((s,d)=>s+(d.valoare||0),0);
+  const openT = db.sarcini.filter(t=>!t.done);
+  document.getElementById('m-clienti').textContent = db.clienti.length;
+  document.getElementById('m-deals').textContent = open.length;
+  document.getElementById('m-val').textContent = val.toLocaleString('ro-RO');
+  document.getElementById('m-sarcini').textContent = openT.length;
+  document.getElementById('dash-deals').innerHTML = db.deals.length
+    ? db.deals.slice(0,5).map(d=>`<div class="task-item"><div style="flex:1"><div style="font-size:13px;font-weight:600">${d.nume}</div><div style="font-size:11px;color:var(--text3)">${d.client||'—'}</div></div><span class="badge b-${d.etapa}">${SLABELS[d.etapa]||d.etapa}</span></div>`).join('')
+    : '<div class="empty">Nicio oportunitate încă.</div>';
+  document.getElementById('dash-tasks').innerHTML = openT.length
+    ? openT.slice(0,5).map(t=>`<div class="task-item"><div style="flex:1"><div style="font-size:13px;font-weight:600">${t.text}</div><div style="font-size:11px;color:var(--text3)">${t.client||''} ${t.data_scadenta?'· '+t.data_scadenta:''}</div></div><span class="badge b-${t.prioritate}">${t.prioritate}</span></div>`).join('')
+    : '<div class="empty">Nicio sarcină activă.</div>';
+}
+
+function renderClienti() {
+  document.getElementById('clienti-body').innerHTML = db.clienti.length
+    ? db.clienti.map(c=>`<tr><td><div style="display:flex;align-items:center;gap:9px"><div class="av">${(c.companie||'?').slice(0,2).toUpperCase()}</div><span style="font-weight:600">${c.companie||'—'}</span></div></td><td>${c.contact||'—'}</td><td style="color:var(--text2)">${c.email||'—'}</td><td style="font-size:12px">${c.telefon||'—'}</td><td><span class="badge b-${c.prioritate}">${c.prioritate||'—'}</span></td></tr>`).join('')
+    : '<tr><td colspan="5"><div class="empty">Niciun client. Apasă + Client nou.</div></td></tr>';
+}
+
+function renderPipeline() {
+  document.getElementById('pipeline-board').innerHTML = STAGES.map(s=>{
+    const items = db.deals.filter(d=>d.etapa===s);
+    return `<div class="stage"><div class="stage-hdr">${SLABELS[s]}<span class="stage-cnt">${items.length}</span></div>${items.length?items.map(d=>`<div class="deal-card"><div class="deal-name">${d.nume}</div><div class="deal-meta">${d.client||'—'}</div><div class="deal-val">${(d.valoare||0).toLocaleString('ro-RO')} lei</div></div>`).join(''):'<div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">—</div>'}</div>`;
+  }).join('');
+}
+
+function renderOferte() {
+  document.getElementById('oferte-body').innerHTML = db.oferte.length
+    ? db.oferte.map(o=>`<tr><td style="font-weight:600">${o.client||'—'}</td><td style="color:var(--text2)">${o.descriere||'—'}</td><td style="font-weight:700;font-size:12px">${(o.valoare||0).toLocaleString('ro-RO')} lei</td><td><span class="badge b-${o.status}">${o.status==='platita'?'Plătită':o.status==='asteptare'?'În așteptare':'Restantă'}</span></td><td style="color:var(--text3);font-size:12px">${o.data||'—'}</td></tr>`).join('')
+    : '<tr><td colspan="5"><div class="empty">Nicio ofertă încă.</div></td></tr>';
+}
+
+function renderSarcini() {
+  document.getElementById('sarcini-list').innerHTML = db.sarcini.length
+    ? db.sarcini.map(t=>`<div class="task-item"><div class="chk ${t.done?'done':''}" onclick="toggleTask('${t.id}',${!t.done})">${t.done?'✓':''}</div><div style="flex:1"><div class="task-txt ${t.done?'done':''}">${t.text}</div><div class="task-sub">${t.client||''} ${t.data_scadenta?'· '+t.data_scadenta:''}</div></div><span class="badge b-${t.prioritate}">${t.prioritate}</span></div>`).join('')
+    : '<div class="empty">Nicio sarcină. Apasă + Sarcină nouă.</div>';
+}
+
+function renderStatistici() {
+  const castigate = db.deals.filter(d=>d.etapa==='Contract');
+  const total = db.deals.length;
+  const valC = castigate.reduce((s,d)=>s+(d.valoare||0),0);
+  const rata = total?Math.round(castigate.length/total*100):0;
+  const avg = total?Math.round(db.deals.reduce((s,d)=>s+(d.valoare||0),0)/total):0;
+  document.getElementById('s-castig').textContent = castigate.length;
+  document.getElementById('s-valcastig').textContent = valC.toLocaleString('ro-RO')+' lei';
+  document.getElementById('s-rata').textContent = rata+'%';
+  document.getElementById('s-avg').textContent = avg.toLocaleString('ro-RO')+' lei';
+  const colors=['#2d5be3','#0369a1','#6d28d9','#c2410c','#7e22ce','#065f46','#166534','#1a7a4a'];
+  const maxD=Math.max(...STAGES.map(s=>db.deals.filter(d=>d.etapa===s).length),1);
+  document.getElementById('chart-pipeline').innerHTML=STAGES.map((s,i)=>{
+    const cnt=db.deals.filter(d=>d.etapa===s).length;
+    return `<div class="bar-row"><span class="bar-lbl">${SLABELS[s]}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxD*100)}%;background:${colors[i]}"></div></div><span class="bar-val">${cnt}</span></div>`;
+  }).join('');
+  const oS=[['platita','Plătite','#1a7a4a'],['asteptare','Așteptare','#b45309'],['restanta','Restante','#b91c1c']];
+  const maxO=Math.max(...oS.map(([s])=>db.oferte.filter(o=>o.status===s).length),1);
+  document.getElementById('chart-oferte').innerHTML=oS.map(([s,l,c])=>{
+    const cnt=db.oferte.filter(o=>o.status===s).length;
+    return `<div class="bar-row"><span class="bar-lbl">${l}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxO*100)}%;background:${c}"></div></div><span class="bar-val">${cnt}</span></div>`;
+  }).join('');
+}
+
+async function toggleTask(id, done) {
+  try {
+    await sbPatch('sarcini', id, {done});
+    db.sarcini = db.sarcini.map(t=>t.id===id?{...t,done}:t);
+    renderSarcini(); renderDashboard();
+  } catch(e){toast('Eroare: '+e.message);}
+}
+
+const PAGE_CFG={
+  dashboard:{title:'Dashboard',btn:null},
+  clienti:{title:'Clienți',btn:'showModal("client")'},
+  pipeline:{title:'Pipeline vânzări',btn:'showModal("deal")'},
+  oferte:{title:'Oferte & Facturi',btn:'showModal("oferta")'},
+  sarcini:{title:'Sarcini & Follow-up-uri',btn:'showModal("task")'},
+  statistici:{title:'Statistici',btn:null}
+};
+const BTN_LABELS={clienti:'+ Client nou',pipeline:'+ Oportunitate nouă',oferte:'+ Ofertă nouă',sarcini:'+ Sarcină nouă'};
+
+function nav(page, el) {
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const cfg=PAGE_CFG[page];
+  document.getElementById('topbar-title').textContent=cfg.title;
+  const acts=document.getElementById('topbar-actions');
+  acts.innerHTML=cfg.btn?`<button class="btn btn-primary" onclick="${cfg.btn}">${BTN_LABELS[page]}</button>`:'';
+}
+
+function clientOpts(){return db.clienti.map(c=>`<option>${c.companie}</option>`).join('')||'<option>—</option>';}
+
+function showModal(type) {
+  let html='';
+  if(type==='client') html=`<div class="modal-title">Client nou</div>
+    <div class="fg"><div class="field"><label>Companie</label><input id="f1" placeholder="Ex: Acme SRL"></div><div class="field"><label>Contact</label><input id="f2" placeholder="Nume prenume"></div></div>
+    <div class="fg"><div class="field"><label>Email</label><input id="f3" placeholder="email@firma.ro"></div><div class="field"><label>Telefon</label><input id="f4" placeholder="07xx xxx xxx"></div></div>
+    <div class="fg full"><div class="field"><label>Prioritate</label><select id="f5"><option value="inalt">Înaltă</option><option value="mediu" selected>Medie</option><option value="scazut">Scăzută</option></select></div></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Anulează</button><button class="btn btn-primary" onclick="saveClient()">Salvează</button></div>`;
+  else if(type==='deal') html=`<div class="modal-title">Oportunitate nouă</div>
+    <div class="fg full"><div class="field"><label>Nume oportunitate</label><input id="f1" placeholder="Ex: Proiect Acme"></div></div>
+    <div class="fg"><div class="field"><label>Client</label><select id="f2">${clientOpts()}</select></div><div class="field"><label>Valoare (lei)</label><input id="f3" type="number" placeholder="10000"></div></div>
+    <div class="fg full"><div class="field"><label>Etapă</label><select id="f4">${STAGES.map(s=>`<option value="${s}">${SLABELS[s]}</option>`).join('')}</select></div></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Anulează</button><button class="btn btn-primary" onclick="saveDeal()">Salvează</button></div>`;
+  else if(type==='oferta') html=`<div class="modal-title">Ofertă nouă</div>
+    <div class="fg full"><div class="field"><label>Client</label><select id="f1">${clientOpts()}</select></div></div>
+    <div class="fg full"><div class="field"><label>Descriere serviciu</label><input id="f2" placeholder="Ex: Consultanță IT 3 luni"></div></div>
+    <div class="fg"><div class="field"><label>Valoare (lei)</label><input id="f3" type="number" placeholder="5000"></div><div class="field"><label>Status</label><select id="f4"><option value="asteptare">În așteptare</option><option value="platita">Plătită</option><option value="restanta">Restantă</option></select></div></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Anulează</button><button class="btn btn-primary" onclick="saveOferta()">Salvează</button></div>`;
+  else if(type==='task') html=`<div class="modal-title">Sarcină nouă</div>
+    <div class="fg full"><div class="field"><label>Descriere</label><input id="f1" placeholder="Ex: Apel follow-up..."></div></div>
+    <div class="fg"><div class="field"><label>Client</label><select id="f2">${clientOpts()}</select></div><div class="field"><label>Data scadentă</label><input id="f3" placeholder="Ex: 20.05.2026"></div></div>
+    <div class="fg full"><div class="field"><label>Prioritate</label><select id="f4"><option value="inalt">Înaltă</option><option value="mediu" selected>Medie</option><option value="scazut">Scăzută</option></select></div></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Anulează</button><button class="btn btn-primary" onclick="saveTask()">Salvează</button></div>`;
+  document.getElementById('modal-root').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`;
+}
+
+function closeModal(){document.getElementById('modal-root').innerHTML='';}
+function g(id){return document.getElementById(id)?.value||'';}
+
+async function saveClient(){
+  try{
+    const data=await sbPost('clienti',{companie:g('f1')||'Companie nouă',contact:g('f2'),email:g('f3'),telefon:g('f4'),prioritate:g('f5')});
+    db.clienti.unshift(data[0]); closeModal(); render(); toast('Client adăugat!');
+  }catch(e){toast('Eroare: '+e.message);}
+}
+async function saveDeal(){
+  try{
+    const data=await sbPost('deals',{nume:g('f1')||'Oportunitate',client:g('f2'),valoare:parseInt(g('f3'))||0,etapa:g('f4')});
+    db.deals.unshift(data[0]); closeModal(); render(); toast('Oportunitate adăugată!');
+  }catch(e){toast('Eroare: '+e.message);}
+}
+async function saveOferta(){
+  try{
+    const now=new Date();
+    const dstr=`${now.getDate().toString().padStart(2,'0')}.${(now.getMonth()+1).toString().padStart(2,'0')}.${now.getFullYear()}`;
+    const data=await sbPost('oferte',{client:g('f1'),descriere:g('f2'),valoare:parseInt(g('f3'))||0,status:g('f4'),data:dstr});
+    db.oferte.unshift(data[0]); closeModal(); render(); toast('Ofertă adăugată!');
+  }catch(e){toast('Eroare: '+e.message);}
+}
+async function saveTask(){
+  try{
+    const data=await sbPost('sarcini',{text:g('f1')||'Sarcină',client:g('f2'),data_scadenta:g('f3'),prioritate:g('f4'),done:false});
+    db.sarcini.unshift(data[0]); closeModal(); render(); toast('Sarcină adăugată!');
+  }catch(e){toast('Eroare: '+e.message);}
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+load();
+</script>
+</body>
+</html>
